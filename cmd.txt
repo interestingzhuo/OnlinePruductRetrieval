@@ -1,0 +1,1 @@
+python main.py --loss cross --lamda 0 --bs 512 --net efficientnet-b4 --mg --resume /data/sjj/submit_food_retrieval_code/efficent_cross_model_epoch_22.pth  --test

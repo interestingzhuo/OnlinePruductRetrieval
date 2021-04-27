@@ -1,0 +1,125 @@
+ def test(test_loader_q, test_loader_g, model, epoch):
+
+      print('>> Evaluating network on test datasets...')
+
+      batch_time = AverageMeter()
+
+      data_time = AverageMeter()
+
+      end = time.time()
+
+      model.eval()
+
+      dataset_q = []
+
+      cluster_q = []
+
+      for step, (x, lbl, _) in enumerate(test_loader_q):
+
+          batch_time.update(time.time() - end)
+
+          end = time.time()
+
+          x = x.cuda()
+
+          x = x.contiguous()
+
+ 
+
+          with torch.no_grad():
+
+              vec, _, _ = model(x)
+
+ 
+
+ 
+
+          dataset_q.extend(vec.unsqueeze(0))
+
+          cluster_q.extend(lbl.cpu().numpy())
+
+ 
+
+          if step % 100 == 0:
+
+              print('>> Test: [{0}][{1}/{2}]\t'
+
+                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+
+                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+
+                  .format(
+
+                  epoch+1, step+1, len(test_loader_q), batch_time=batch_time,
+
+                  data_time=data_time))
+
+ 
+
+ 
+
+ 
+
+      dataset_q = torch.cat(dataset_q, dim = 0)
+
+ 
+
+      dataset_g = []
+
+      cluster_g = []
+
+      for step, (x, lbl, _) in enumerate(test_loader_g):
+
+          batch_time.update(time.time() - end)
+
+          end = time.time()
+
+          x = x.cuda()
+
+          x = x.contiguous()
+
+ 
+
+          with torch.no_grad():
+
+              vec, _, _ = model(x)
+
+ 
+
+ 
+
+          dataset_g.extend(vec.unsqueeze(0))
+
+          cluster_g.extend(lbl.cpu().numpy())
+
+ 
+
+          if step % 100 == 0:
+
+             print('>> Test: [{0}][{1}/{2}]\t'
+
+                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+
+                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+
+                  .format(
+
+                  epoch+1, step+1, len(test_loader_g), batch_time=batch_time,
+
+                  data_time=data_time))
+
+ 
+
+ 
+
+ 
+
+      dataset_g = torch.cat(dataset_g, dim = 0)
+
+      mAP,recall = Test(dataset_q,dataset_g,cluster_q,cluster_g)
+
+ 
+
+ 
+
+      return 0, 0, mAP, recall
