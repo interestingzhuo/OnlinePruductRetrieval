@@ -42,11 +42,11 @@ def comp_MAp_k(ranks,clusters_q,clusters_g):
     
     Ap=[0]*3;
     recall = [0]*3;
-    top = [1,3,5]
+    top = [1,5,10]
 
 
     for i in range(ranks.shape[0]):
-        binary=[clusters_q[i]==clusters_g[j] for j in ranks[i]]
+        binary=[clusters_q[i]==clusters_g[j] for j in ranks[i][1:]]
         for j in range(3):
             a = comp_AP_k(binary,top[j])
             Ap[j] += a
@@ -54,15 +54,21 @@ def comp_MAp_k(ranks,clusters_q,clusters_g):
     return Ap,recall
 
 
-def Test(dataset,clusters):
+def Test_mAP(dataset,clusters):
     st = time.time()
     similarity = torch.mm(dataset, dataset.t())
     print('distance_time:',time.time() - st)
     st = time.time()
-    ranks = torch.argsort(similarity,dim=1)
+    ranks = torch.topk(similarity,11,dim=1).indices
     print('rank_time:',time.time() - st)
-    MAp,recall = comp_MAp(ranks,clusters,similarity);
-    return MAp,recall 
+    MAp,recall = comp_MAp_k(ranks,clusters,clusters);
+    
+    return MAp,recall    
+
+    #ranks = torch.argsort(similarity,dim=1)
+    #print('rank_time:',time.time() - st)
+    #MAp,recall = comp_MAp(ranks,clusters,similarity);
+    #return MAp,recall 
 
 
 def Test(dataset_q,dataset_g,cluster_q,cluster_g):

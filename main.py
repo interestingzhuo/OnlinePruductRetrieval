@@ -69,7 +69,7 @@ parser = par.loss_specific_parameters(parser)
 parser = par.wandb_parameters(parser)
 parser = par.origin_parameters(parser)
 opt = parser.parse_args()
-
+os.environ["CUDA_VISIBLE_DEVICES"]   ="0,1,2,3,4,5,6"
 def main():
 
 
@@ -146,7 +146,7 @@ def main():
     if opt.loss == 'cross':
         train_dataset = ImagesForCls_list(imgs_root, train_file, image_size,transform=transform)
     else:
-        train_dataset = TuplesDataset(os.path.join(imgs_root,train_folder),image_size,batch_p = batch_p,batch_k = batch_k,transform=transform)
+        train_dataset = TuplesDataset_list(imgs_root, train_file, image_size,batch_p = batch_p,batch_k = batch_k,transform=transform)
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=BATCH_SIZE, shuffle=True,
         num_workers=opt.kernels, pin_memory=True, sampler=None,
@@ -156,10 +156,7 @@ def main():
 
     test_dataset = ImagesForCls_list(imgs_root, val_file, image_size,transform=transform,is_validation=True)
     BATCH_SIZE = 512
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=BATCH_SIZE, shuffle=False,
-        num_workers=8, pin_memory=True, sampler=None,
-    )
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False,num_workers=8, pin_memory=True, sampler=None,)
     
     
     
@@ -186,17 +183,19 @@ def main():
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     if opt.mg:
-        model=nn.DataParallel(model,device_ids=[0,1]) 
+        model=nn.DataParallel(model,device_ids=[0,1,2,3,4,5,6]) 
     
     Logger_file = os.path.join(directory,"log.txt")
     
     if opt.test:
         
         metric = test_single_dataset(model)
-        #metric = ''
+        metric = ''
         AP,precision = test(test_loader, model, -1)
-        precision = 'precision:' + str(precision)
+        precision = 'precision: ' + str(precision)
         metric += precision
+        AP = 'Average Precisioni: ' + str(AP)
+        metric += AP
         print(metric)
         with open(Logger_file,'a') as f:
             f.write(metric+'\n')
@@ -213,9 +212,11 @@ def main():
         
         # metric = test_single_dataset(model)
         metric = ''
-        precision = test(test_loader, model, epoch)
-        precision = 'precision:' + str(precision)
+        AP,precision = test(test_loader, model, -1)
+        precision = 'precision: ' + str(precision)
         metric += precision
+        AP = 'Average Precisioni: ' + str(AP)
+        metric += AP 
         with open(Logger_file,'a') as f:
             f.write(metric+'\n')
             #f.write("epoch:{}\tAP@m:{}\tPrecision:{}\tmAP:{}\trecall:{}\n".format(epoch,AP,precision,mAP,recall))
@@ -282,6 +283,8 @@ def test(test_loader, model, epoch):
     precision = PrecisionMeter(False)
     right = 0
     cnt = 0
+    dataset = []
+    gt = []
     for step, (x, lbl) in enumerate(test_loader):
         batch_time.update(time.time() - end)
         end = time.time()
@@ -289,14 +292,15 @@ def test(test_loader, model, epoch):
         x = x.contiguous()
 
         with torch.no_grad():
-            _, out = model(x)
-        #output = out.cpu().numpy()
+            embd, out = model(x)
+        dataset.extend(embd.unsqueeze(0))
+        gt.extend(lbl)
+        
         target = lbl.cuda()
         output = out.argmax(dim = 1)
         precision =  target == output
         right += sum(precision)
         cnt += len(precision)
-        #precision.add(out_cls.data,lbl)
 
         precision = float(right)/cnt
         if step % 100 == 0:
@@ -306,6 +310,9 @@ def test(test_loader, model, epoch):
                 .format(
                 epoch+1, step+1, len(test_loader), precision,  batch_time=batch_time,
                 data_time=data_time))
-    return precision
+    dataset = torch.cat(dataset,dim=0)
+    gt = np.reshape(gt,-1)
+    AP, recall = Test_mAP(dataset,gt)
+    return AP, precision
 if __name__=='__main__':
     main()
