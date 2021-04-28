@@ -183,18 +183,18 @@ def main():
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     if opt.mg:
-        model=nn.DataParallel(model,device_ids=[0,1,2,3,4,5,6]) 
+        model=nn.DataParallel(model,device_ids=[0,1]) 
     
     Logger_file = os.path.join(directory,"log.txt")
     
     if opt.test:
         
-        metric = test_single_dataset(model)
+        test_single_dataset(model)
         metric = ''
         AP,precision = test(test_loader, model, -1)
         precision = 'precision: ' + str(precision)
         metric += precision
-        AP = 'Average Precisioni: ' + str(AP)
+        AP = '\tAverage Precisioni: ' + str(AP)
         metric += AP
         print(metric)
         with open(Logger_file,'a') as f:
@@ -215,7 +215,7 @@ def main():
         AP,precision = test(test_loader, model, -1)
         precision = 'precision: ' + str(precision)
         metric += precision
-        AP = 'Average Precisioni: ' + str(AP)
+        AP = '\t Average Precision: ' + str(AP)
         metric += AP 
         with open(Logger_file,'a') as f:
             f.write(metric+'\n')

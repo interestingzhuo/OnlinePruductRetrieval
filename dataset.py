@@ -146,7 +146,6 @@ class ImagesForCls(data.Dataset):
     def __len__(self):
         return len(self.images_fn)
 
-
 class ImagesForTest(data.Dataset):
 
     def __init__(self, ims_root, file_list, imsize=224, bbxs=None, transform=None):
@@ -189,7 +188,6 @@ class ImagesForTest(data.Dataset):
 
     def __len__(self):
         return len(self.images_fn)
-
 
 
 class TuplesDataset(data.Dataset):
@@ -260,11 +258,11 @@ class TuplesDataset(data.Dataset):
 
 class TuplesDataset_list(data.Dataset):
 
-    def __init__(self,train_list,imsize,batch_p,batch_k,transform):
+    def __init__(self,imgs_root, train_list,imsize,batch_p,batch_k,transform):
         self.imsize = imsize
         self.batch_p = batch_p
         self.batch_k = batch_k
-        self.dict = self.create_dict(train_list)
+        self.dict = self.create_dict(imgs_root, train_list)
         self.keys = []
         self.f_norm = normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
         self.normal_transform = []
@@ -272,9 +270,9 @@ class TuplesDataset_list(data.Dataset):
                                        transforms.ColorJitter(0.2, 0.2, 0.2, 0.2), transforms.RandomHorizontalFlip(0.5)])
         self.normal_transform.extend([transforms.ToTensor(), normalize])
         self.normal_transform = transforms.Compose(self.normal_transform)
-    def create_dict(self, file_list):
+    def create_dict(self, imgs_root, file_list):
 
-        images, clusters = self.get_imgs(file_list)
+        images, clusters = self.get_imgs(file_list, imgs_root)
         self.iterations = len(images)//(self.batch_p*self.batch_k)
         dict = {}
         for i in range(len(images)):
@@ -282,10 +280,6 @@ class TuplesDataset_list(data.Dataset):
                 dict[clusters[i]]+=[images[i]]
             else:
                 dict[clusters[i]] = [images[i]]
-        #self.cur = {}
-        #for key in dict.keys():
-        #    random.shuffle(dict[key])
-        #    self.cur[key] = 0
         return dict
     def create_tuple(self):
         self.batch_sample = []
@@ -324,22 +318,23 @@ class TuplesDataset_list(data.Dataset):
 
 
 
-    def get_imgs(self,train_list):
+    def get_imgs(self, train_list, img_root):
         with open(train_list) as f:
             lines = f.readlines()
         images = [item.strip().split()[0] for item in lines]
+        images = [os.path.join(img_root,item) for item in images]
         clusters = [int(item.strip().split()[1]) for item in lines]
         return images,np.array(clusters)
 
 
 if __name__=='__main__':
-    img_root = '/data/sjj/ePruduct_dataset'
-    file_list = os.path.join(img_root, 'index.csv')
+    img_root = '/workdir/lizhuo/dataset/mt20000/images/MTCV_merge_to_dishname_20191108_stage2_sku_2w_imgs_320_changemode_train_changemode'
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     transform = transforms.Compose([
         transforms.ToTensor(),normalize
     ])
-    train_dataset = ImagesForTest(img_root, file_list, 224, transform=transform)
+    train_dataset = TuplesDataset(img_root,224, 100,2,transform=transform)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=1, shuffle=True)
+    train_loader.dataset.create_tuple()
     for step, (x, y) in enumerate(train_loader):
         pdb.set_trace()

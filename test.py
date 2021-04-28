@@ -147,7 +147,7 @@ def test(test_loader_q, test_loader_g, model, epoch):
         dataset_q.extend(vec.unsqueeze(0))
 
 
-        if step % 100 == 0 and step != 0:
+        if step % 100 == 0:
 
             print('>> Test: [{0}][{1}/{2}]\t'
 
@@ -206,6 +206,7 @@ def test(test_loader_q, test_loader_g, model, epoch):
                 epoch+1, step+1, len(test_loader_g), batch_time=batch_time,
 
                 data_time=data_time))
+            # break
             
 
 
@@ -223,36 +224,30 @@ def test(test_loader_q, test_loader_g, model, epoch):
         for i in range(2000):
             
             f.write(code_q[i] + ',')
-            # path = '/data/sjj/ePruduct_dataset/query_part1/'+code_q[i]+'.JPEG'
-            # img_q = cv2.imread(path)
-            # img_q = cv2.resize(img_q, (224,224))
-            # img_r = []
-            f.write(code_g[I[i][0]] + ' ')
-
-            for j in range(1,10):
-                if(D[i][j] > 0.9):
-                    break;
+            path = '/data/sjj/ePruduct_dataset/query_part1/'+code_q[i]+'.JPEG'
+            img_q = cv2.imread(path)
+            img_q = cv2.resize(img_q, (224,224))
+            img_r = []
+            for j in range(10):
                 f.write(code_g[I[i][j]] + ' ')
-                # path = '/data/sjj/ePruduct_dataset/index/'+code_g[I[i][j]]+'.JPEG'
-                # img = cv2.imread(path)
-                # img = cv2.resize(img, (224,224))
-                # font = cv2.FONT_HERSHEY_SIMPLEX
-                # img = cv2.putText(img, str(D[i][j]), (112, 112 ), font, 1.2, (255 , 0, 0 ), 2)
-                # img_r += [img]
+                path = '/data/sjj/ePruduct_dataset/index/'+code_g[I[i][j]]+'.JPEG'
+                img = cv2.imread(path)
+                img = cv2.resize(img, (224,224))
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                img = cv2.putText(img, str(D[i][j]), (112, 112 ), font, 1.2, (255 , 0, 0 ), 2)
+                img_r += [img]
             
             # # pdb.set_trace()
-            # for j in range(10):
-            #     img_q = np.concatenate((img_q, img_r[j]), axis = 1 )
+            for j in range(10):
+                img_q = np.concatenate((img_q, img_r[j]), axis = 1 )
             
-            # save_path = os.path.join('/data/sjj/submit_food_retrieval_code/visual', code_q[i]+'.JPEG')
-            # cv2.imwrite(save_path, img_q)
+            save_path = os.path.join('visual', code_q[i]+'.JPEG')
+            cv2.imwrite(save_path, img_q)
             # f.write(',')
             # for j in range(10):
             #     f.write(str(D[i][j]) + ' ')
             f.write('\r\n')
 
-    exit()
-    return 0, 0, 0, 0
 
 def test_single_dataset(model):
 
@@ -289,9 +284,6 @@ def test_single_dataset(model):
     
     test(test_loader_q, test_loader_g, model, -1)
 
-    dataset = ''
-    mAP = 0
-    return ("Dataset:{0}\tmAP:{1}\t".format(dataset,mAP))
 
 
 def main():
