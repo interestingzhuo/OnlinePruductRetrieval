@@ -195,7 +195,7 @@ def main():
     
     if opt.test:
         
-        test_single_dataset(model)
+        # test_single_dataset(model)
         metric = ''
         AP,precision = test(test_loader, model, -1)
         precision = 'precision: ' + str(precision)
@@ -308,7 +308,7 @@ def test(test_loader, model, epoch):
         gt.extend(lbl)
         
         target = lbl.cuda()
-        output = out.argmax(dim = 1)
+        output = output.argmax(dim = 1)
         precision =  target == output
         right += sum(precision)
         cnt += len(precision)
