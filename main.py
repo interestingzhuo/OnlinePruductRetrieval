@@ -18,6 +18,7 @@ from test import test_single_dataset
 import batchminer    as bmine
 import criteria      as criteria
 import parameters    as par
+from torch.cuda.amp import *
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -69,7 +70,7 @@ parser = par.loss_specific_parameters(parser)
 parser = par.wandb_parameters(parser)
 parser = par.origin_parameters(parser)
 opt = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]   ="0,1,2,3,4,5,6"
+
 def main():
 
 
@@ -127,9 +128,8 @@ def main():
     ])
     
 
-    criterion =  nn.BCEWithLogitsLoss( reduction='mean' )
-    
-    criterion_cls =  nn.CrossEntropyLoss()
+
+    opt.device = torch.device('cuda')
 
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
     d = localtime+'_'+opt.loss;
@@ -161,7 +161,11 @@ def main():
     
     
     to_optim   = [{'params':model.parameters(),'lr':lr,'momentum':opt.momentum,'weight_decay':1e-5}]
-
+    
+    
+    criterion_cls =  nn.CrossEntropyLoss()
+    # criterion_cls, to_optim = criteria.select('arcface', opt, to_optim)
+    # criterion_cls.cuda()
 
     #################### LOSS SETUP ####################
     if opt.loss != 'cross':
@@ -169,6 +173,8 @@ def main():
     
         criterion_metric, to_optim = criteria.select(opt.loss, opt, to_optim, batchminer = batchminer)
         criterion_metric.cuda()
+
+        
     
     
 
@@ -183,7 +189,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     if opt.mg:
-        model=nn.DataParallel(model,device_ids=[0,1,2,3]) 
+        model=nn.DataParallel(model,device_ids=[0,1,2,3,4,5,6,7]) 
     
     Logger_file = os.path.join(directory,"log.txt")
     
@@ -204,9 +210,9 @@ def main():
         if opt.loss != 'cross':
             train_loader.dataset.create_tuple()
             print('tuple created finished!')
-            train(train_loader,model,epoch,criterion,criterion_cls,optimizer,opt,criterion_metric)
+            train(train_loader,model,epoch,criterion_cls,optimizer,opt,criterion_metric)
         else:
-            train(train_loader,model,epoch,criterion,criterion_cls,optimizer,opt)
+            train(train_loader,model,epoch,criterion_cls,optimizer,opt)
         scheduler.step()
         torch.cuda.empty_cache()
         
@@ -231,14 +237,14 @@ def main():
         #        optimizer.param_groups[i]['lr'] /= 2
              
 
-def train(train_loader,model,epoch,criterion,criterion_cls, optimizer,opt, criterion_metric=None):
+def train(train_loader,model,epoch,criterion_cls, optimizer,opt, criterion_metric=None):
     batch_time = AverageMeter()
     train_loss = AverageMeter()
     m_loss = AverageMeter() 
     cls_loss = AverageMeter()
     end = time.time()
     model.train()
-
+    scaler = GradScaler()
     for step, (x, cls) in enumerate(train_loader):
         batch_time.update(time.time() - end)
         end = time.time()
@@ -246,22 +252,27 @@ def train(train_loader,model,epoch,criterion,criterion_cls, optimizer,opt, crite
         cls = cls.squeeze()
         
         x = x.cuda()
-        out_m,out_cls = model(x)
+        with autocast():
+            out,out_c = model(x)
         
         
-        loss = (1-opt.lamda)*criterion_cls(out_cls,cls.cuda())#分类损失
+            loss = (1-opt.lamda)*criterion_cls(out_c,cls.cuda())#分类损失
         
-        cls_loss.update(loss.item())
-        if criterion_metric != None:
-            metric_loss = opt.lamda*criterion_metric(out_m,cls)#度量损失
-            m_loss.update(metric_loss.item())
-            loss = loss + metric_loss
+            cls_loss.update(loss.item())
+            if criterion_metric != None:
+                metric_loss = opt.lamda*criterion_metric(out,cls)#度量损失
+                m_loss.update(metric_loss.item())
+                loss = loss + metric_loss
 
-        train_loss.update(loss.item())
-        optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=20, norm_type=2)
-        optimizer.step()
+            train_loss.update(loss.item())
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        # optimizer.zero_grad()
+        # loss.backward()
+        # torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=20, norm_type=2)
+        # optimizer.step()
         lr = optimizer.param_groups[0]['lr']
         if step % 100 == 0 and step != 0:
             print('>> Train: [{0}][{1}/{2}]\tlr: {3}\t'
@@ -292,7 +303,7 @@ def test(test_loader, model, epoch):
         x = x.contiguous()
 
         with torch.no_grad():
-            embd, out = model(x)
+            embd, output = model(x)
         dataset.extend(embd.unsqueeze(0))
         gt.extend(lbl)
         
@@ -303,6 +314,7 @@ def test(test_loader, model, epoch):
         cnt += len(precision)
 
         precision = float(right)/cnt
+        # precision = 0
         if step % 100 == 0:
             print('>> Test: [{0}][{1}/{2}]\t precision: {3}\t'
                 'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'

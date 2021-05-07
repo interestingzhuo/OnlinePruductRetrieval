@@ -17,7 +17,7 @@ class Criterion(torch.nn.Module):
         self.angular_margin = opt.loss_arcface_angular_margin
         self.feature_scale  = opt.loss_arcface_feature_scale
 
-        self.class_map = torch.nn.Parameter(torch.Tensor(opt.n_classes, opt.embed_dim))
+        self.class_map = torch.nn.Parameter(torch.Tensor(opt.cls_num, opt.embed_dim))
         stdv = 1. / np.sqrt(self.class_map.size(1))
         self.class_map.data.uniform_(-stdv, stdv)
 
@@ -40,7 +40,7 @@ class Criterion(torch.nn.Module):
         #Note that the similarity becomes the cosine for normalized embeddings. Denoted as 'fc7' in the paper pseudocode.
         cos_similarity = batch.mm(class_map.T).clamp(min=1e-10, max=1-1e-10)
 
-        pick = torch.zeros(bs, self.par.n_classes).torch.bool().to(self.par.device)
+        pick = torch.zeros(bs, self.par.cls_num).bool().to(self.par.device)
         pick[torch.arange(bs), labels] = 1
 
         original_target_logit  = cos_similarity[pick]
