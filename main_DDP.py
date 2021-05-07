@@ -19,6 +19,18 @@ import batchminer    as bmine
 import criteria      as criteria
 import parameters    as par
 
+from torch import distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader
+import torch
+
+
+class DataLoaderX(DataLoader):
+    def __iter__(self):
+            return BackgroundGenerator(super().__iter__(), max_prefetch=10)
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -68,8 +80,22 @@ parser = par.batchmining_specific_parameters(parser)
 parser = par.loss_specific_parameters(parser)
 parser = par.wandb_parameters(parser)
 parser = par.origin_parameters(parser)
+parser.add_argument('--local_rank', type=int, help="local gpu id")
 opt = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]   ="0,1,2,3,4,5,6"
+
+
+
+dist.init_process_group(backend='nccl', init_method='env://')
+assert torch.cuda.is_available()
+#os.environ['CUDA_VISIBLE_DEVICES'] = config.GPU
+device = torch.device("cuda")
+torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.enable = True
+torch.cuda.set_device(opt.local_rank)
+global_rank = dist.get_rank()
+world_size = dist.get_world_size()
+opt.device = torch.device('cuda')
+
 def main():
 
 
@@ -181,9 +207,11 @@ def main():
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-
-    if opt.mg:
-        model=nn.DataParallel(model,device_ids=[0,1,2,3]) 
+    _  = model.to(opt.device)
+    model = DDP(model, device_ids=[opt.local_rank], output_device=opt.local_rank,
+            find_unused_parameters=True)
+    #if opt.mg:
+    #    model=nn.DataParallel(model,device_ids=[0,1,2,3]) 
     
     Logger_file = os.path.join(directory,"log.txt")
     

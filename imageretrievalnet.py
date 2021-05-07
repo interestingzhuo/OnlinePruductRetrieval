@@ -26,12 +26,12 @@ pool_dic = {
  }
 
 class ImageRetrievaleffNet(nn.Module):
-    def __init__(self, net):
+    def __init__(self, net, pool):
 
         super(ImageRetrievaleffNet, self).__init__()
         self.net = net
         self.norm = L2N()
-
+        self.pool = pool
 
 
     def forward(self, x, test=False):
@@ -42,7 +42,8 @@ class ImageRetrievaleffNet(nn.Module):
         x = self.net.extract_features(x)
 
         # Pooling and final linear layer
-        x = self.net._avg_pooling(x)
+        # x = self.net._avg_pooling(x)
+        x = self.pool(x)
         o = x
         x = x.view(bs, -1)
         x = self.net._dropout(x)
@@ -84,28 +85,6 @@ class VITImageRetrievalNet(nn.Module):
         return o, x
 
 def image_net(net_name,opt):
-    if net_name == 'resnet101':
-        net = torchvision.models.resnet101(pretrained=True)
-    elif net_name == 'resnet50':
-        net = torchvision.models.resnet50(pretrained=True)
-    elif 'vit' in net_name:
-        net = timm.create_model(net_name, pretrained = True)
-        #x = self.forward_features(x)
-        #x = self.head(x)
-        net.head = nn.Linear(net.embed_dim, opt.cls_num)
-        return VITImageRetrievalNet(net)
-         
-    elif 'efficient' in net_name:
-        net = EfficientNet.from_pretrained(net_name, num_classes=opt.cls_num)
-        return ImageRetrievaleffNet(net)
-    else:
-        raise ValueError('Unsupported or unknown architecture: {}!'.format(architecture))
-
-    net.fc = nn.Linear(in_features=2048, out_features=opt.cls_num, bias=True)
-
-
-    features = list(net.children())[:-2]
-    fc_cls = net.fc
     if "R-" in opt.pool:
         if opt.pool == 'R-ori':
             pool = net.avgpool
@@ -117,6 +96,27 @@ def image_net(net_name,opt):
             pool = net.avgpool
         else:
            pool = pool_dic[opt.pool]()
+
+    if net_name == 'resnet101':
+        net = torchvision.models.resnet101(pretrained=True)
+    elif net_name == 'resnet50':
+        net = torchvision.models.resnet50(pretrained=True)
+    elif 'vit' in net_name:
+        net = timm.create_model(net_name, pretrained = True)
+        net.head = nn.Linear(net.embed_dim, opt.cls_num)
+        return VITImageRetrievalNet(net)
+         
+    elif 'efficient' in net_name:
+        net = EfficientNet.from_pretrained(net_name, num_classes=opt.cls_num)
+        return ImageRetrievaleffNet(net,pool)
+    else:
+        raise ValueError('Unsupported or unknown architecture: {}!'.format(architecture))
+
+    net.fc = nn.Linear(in_features=2048, out_features=opt.cls_num, bias=True)
+
+
+    features = list(net.children())[:-2]
+    fc_cls = net.fc
     return ImageRetrievalresNet(features,fc_cls,pool)
 
 

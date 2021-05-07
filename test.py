@@ -114,7 +114,7 @@ def test(test_loader_q, test_loader_g, model, epoch):
     data_time = AverageMeter()
     ngpus = faiss.get_num_gpus()
 
-    d = 1792
+    d = 2048
     
     gpu_index = cpu_index = faiss.IndexFlatL2(d)
     #gpu_index = faiss.index_cpu_to_all_gpus(  # build the index
@@ -224,13 +224,13 @@ def test(test_loader_q, test_loader_g, model, epoch):
         for i in range(2000):
             
             f.write(code_q[i] + ',')
-            path = '/data/sjj/ePruduct_dataset/query_part1/'+code_q[i]+'.JPEG'
+            path = '/workdir/lizhuo/ePruduct_dataset/query_part1/'+code_q[i]+'.JPEG'
             img_q = cv2.imread(path)
             img_q = cv2.resize(img_q, (224,224))
             img_r = []
             for j in range(10):
                 f.write(code_g[I[i][j]] + ' ')
-                path = '/data/sjj/ePruduct_dataset/index/'+code_g[I[i][j]]+'.JPEG'
+                path = '/workdir/lizhuo/ePruduct_dataset/index/'+code_g[I[i][j]]+'.JPEG'
                 img = cv2.imread(path)
                 img = cv2.resize(img, (224,224))
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -265,7 +265,7 @@ def test_single_dataset(model):
         transforms.ToTensor(),normalize
     ])
 
-    img_root = '/data/sjj/ePruduct_dataset'
+    img_root = '/workdir/lizhuo/ePruduct_dataset'
     
     file_list = os.path.join(img_root, 'query_part1.csv')
 
