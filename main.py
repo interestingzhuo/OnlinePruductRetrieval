@@ -100,6 +100,8 @@ def main():
 
     cls_num = opt.cls_num
 
+    opt.n_classes = opt.cls_num
+
     ###############################################
     batch_p = opt.batch_p
 
@@ -145,12 +147,25 @@ def main():
         f.write(log_str)    
     if opt.loss == 'cross':
         train_dataset = ImagesForCls_list(imgs_root, train_file, image_size,transform=transform)
+        train_dataset_cls = train_dataset
+        BATCH_SIZE_CLS = BATCH_SIZE
     else:
+        train_dataset_cls = ImagesForCls_list(imgs_root, train_file, image_size,transform=transform)
         train_dataset = TuplesDataset_list(imgs_root, train_file, image_size,batch_p = batch_p,batch_k = batch_k,transform=transform)
+        
+        BATCH_SIZE_CLS = batch_p * batch_k
+
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=BATCH_SIZE, shuffle=True,
         num_workers=opt.kernels, pin_memory=True, sampler=None,
     )
+    
+    train_loader_cls = torch.utils.data.DataLoader(
+        train_dataset_cls, batch_size=BATCH_SIZE_CLS, shuffle=True,
+        num_workers=opt.kernels, pin_memory=True, sampler=None,
+    )
+    
     print('train dataloader finished!')
     
 
@@ -185,8 +200,10 @@ def main():
     else:
         raise Exception('Optimizer <{}> not available!'.format(opt.optim))
 
-    exp_decay = math.exp(-0.01)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+    # exp_decay = math.exp(-0.01)
+    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+    scheduler    = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=opt.tau, gamma=opt.gamma)
+
 
     if opt.mg:
         model=nn.DataParallel(model,device_ids=[0,1,2,3,4,5,6,7]) 
@@ -195,7 +212,7 @@ def main():
     
     if opt.test:
         
-        # test_single_dataset(model)
+        test_single_dataset(model)
         metric = ''
         AP,precision = test(test_loader, model, -1)
         precision = 'precision: ' + str(precision)
@@ -208,9 +225,16 @@ def main():
     for epoch in range(EPOCHS):
          
         if opt.loss != 'cross':
-            train_loader.dataset.create_tuple()
-            print('tuple created finished!')
-            train(train_loader,model,epoch,criterion_cls,optimizer,opt,criterion_metric)
+            
+
+            if epoch % 3 == 0 and epoch != 0:#迭代式训练
+                train(train_loader_cls,model,epoch,criterion_cls,optimizer,opt)
+            else:
+                train_loader.dataset.create_tuple()
+                print('tuple created finished!')
+                train(train_loader,model,epoch,criterion_cls,optimizer,opt,criterion_metric)
+
+            
         else:
             train(train_loader,model,epoch,criterion_cls,optimizer,opt)
         scheduler.step()

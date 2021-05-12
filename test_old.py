@@ -221,12 +221,9 @@ def test(test_loader_q, test_loader_g, model, epoch):
             f.write(code_q[i] + ',')
             for j in range(10):
                 f.write(code_g[I[i][j]] + ' ')
-            # f.write(',')
-            # for j in range(10):
-            #     f.write(D[i][j] + ' ')
+            
             f.write('\r\n')
-            # shutil.cp('/data/sjj/ePruduct_dataset/query_part1'+code_q[i]+'.JPEG','/data/sjj/submit_food_retrieval_code/')
-            # cv2.puttext()
+
 
     exit()
     return 0, 0, 0, 0

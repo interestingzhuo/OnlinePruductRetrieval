@@ -23,7 +23,7 @@ def basic_training_parameters(parser):
     parser.add_argument('--seed',              default=1,        type=int,          help='Random seed for reproducibility.')
     parser.add_argument('--scheduler',         default='step',   type=str,          help='Type of learning rate scheduling. Currently supported: step')
     parser.add_argument('--gamma',             default=0.3,      type=float,        help='Learning rate reduction after tau epochs.')
-    parser.add_argument('--tau',               default=[1000], nargs='+',type=int , help='Stepsize before reducing learning rate.')
+    parser.add_argument('--tau',               default=[20,30,50], nargs='+',type=int , help='Stepsize before reducing learning rate.')
 
     ##### Loss-specific Settings
     parser.add_argument('--optim',           default='adam',        type=str,   help='Optimization method to use. Currently supported: adam & sgd.')

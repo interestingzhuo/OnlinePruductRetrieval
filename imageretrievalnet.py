@@ -67,6 +67,7 @@ class ImageRetrievalresNet(nn.Module):
     
     def forward(self, x, test=False):
         o = self.features(x)
+        
         o = self.pool(o)
         cls = self.fc_cls(o.squeeze())
         o = self.norm(o).squeeze(-1).squeeze(-1)
@@ -101,6 +102,9 @@ def image_net(net_name,opt):
         net = torchvision.models.resnet101(pretrained=True)
     elif net_name == 'resnet50':
         net = torchvision.models.resnet50(pretrained=True)
+    elif 'legacy' in net_name :
+        net = timm.create_model(net_name, pretrained = True)
+        
     elif 'vit' in net_name:
         net = timm.create_model(net_name, pretrained = True)
         net.head = nn.Linear(net.embed_dim, opt.cls_num)
@@ -111,12 +115,10 @@ def image_net(net_name,opt):
         return ImageRetrievaleffNet(net,pool)
     else:
         raise ValueError('Unsupported or unknown architecture: {}!'.format(architecture))
-
-    net.fc = nn.Linear(in_features=2048, out_features=opt.cls_num, bias=True)
-
-
+    # pdb.set_trace()
+    
     features = list(net.children())[:-2]
-    fc_cls = net.fc
+    fc_cls = nn.Linear(in_features=2048, out_features=opt.cls_num, bias=True)
     return ImageRetrievalresNet(features,fc_cls,pool)
 
 

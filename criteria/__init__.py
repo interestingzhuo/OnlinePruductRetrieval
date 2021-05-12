@@ -3,7 +3,7 @@ from criteria import triplet, margin, proxynca, npair
 from criteria import lifted, contrastive, softmax
 from criteria import angular, snr, histogram, arcface
 from criteria import softtriplet, multisimilarity, quadruplet
-from criteria import smoothap,PNP
+from criteria import smoothap,PNP,circle
 ### Non-Standard Criteria
 from criteria import adversarial_separation
 ### Basic Libs
@@ -29,7 +29,8 @@ def select(loss, opt, to_optim=[], batchminer=None):
               'quadruplet':quadruplet,
               'adversarial_separation':adversarial_separation,
               'smoothap':smoothap,
-              'PNP':PNP
+              'PNP':PNP,
+              'circle':circle,
               
               }
 
