@@ -16,6 +16,7 @@ from efficientnet_pytorch import EfficientNet
 
 import timm
 
+# from models import WSDAN
 
 pool_dic = {
 "GeM":GeM,
@@ -102,6 +103,10 @@ def image_net(net_name,opt):
         net = torchvision.models.resnet101(pretrained=True)
     elif net_name == 'resnet50':
         net = torchvision.models.resnet50(pretrained=True)
+
+    # elif net_name == 'WSDAN':
+    #     net = WSDAN(num_classes=opt.cls_num, M=config.num_attentions, net=config.net, pretrained=True)
+        
     elif 'legacy' in net_name :
         net = timm.create_model(net_name, pretrained = True)
         
@@ -109,7 +114,7 @@ def image_net(net_name,opt):
         net = timm.create_model(net_name, pretrained = True)
         net.head = nn.Linear(net.embed_dim, opt.cls_num)
         return VITImageRetrievalNet(net)
-         
+        
     elif 'efficient' in net_name:
         net = EfficientNet.from_pretrained(net_name, num_classes=opt.cls_num)
         return ImageRetrievaleffNet(net,pool)
