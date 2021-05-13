@@ -31,7 +31,7 @@ def basic_training_parameters(parser):
     parser.add_argument('--batch_mining',    default='distance',    type=str,   help='Batchminer for tuple-based losses: For supported methods, please check batch_mining/__init__.py')
 
     ##### Network-related Flags
-    parser.add_argument('--embed_dim',        default=1792,         type=int,                    help='Embedding dimensionality of the network. Note: dim = 64, 128 or 512 is used in most papers, depending on the architecture.')
+    parser.add_argument('--embed_dim',        default=2048,         type=int,                    help='Embedding dimensionality of the network. Note: dim = 64, 128 or 512 is used in most papers, depending on the architecture.')
     parser.add_argument('--not_pretrained',   action='store_true',                              help='Flag. If set, no ImageNet pretraining is used to initialize the network.')
     parser.add_argument('--arch',             default='resnet50_frozen_normalize',  type=str,   help='Underlying network architecture. Frozen denotes that \
                                                                                                   exisiting pretrained batchnorm layers are frozen, and normalize denotes normalization of the output embedding.')

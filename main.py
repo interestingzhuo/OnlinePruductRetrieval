@@ -19,6 +19,7 @@ import batchminer    as bmine
 import criteria      as criteria
 import parameters    as par
 from torch.cuda.amp import *
+from autoaugment import CIFAR10Policy
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -124,17 +125,16 @@ def main():
  
 
     ####################################################
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    transform = transforms.Compose([
-        transforms.ToTensor(),normalize
-    ])
+    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    transform = CIFAR10Policy()
+   
     
 
 
     opt.device = torch.device('cuda')
 
     localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-    d = localtime+'_'+opt.loss;
+    d = localtime + '_' + opt.loss +  '_' +  opt.net
     
     if opt.graph:
         d+='_graph'
@@ -223,7 +223,9 @@ def main():
         with open(Logger_file,'a') as f:
             f.write(metric+'\n')
     for epoch in range(EPOCHS):
-         
+        
+
+        
         if opt.loss != 'cross':
             
 
@@ -237,6 +239,7 @@ def main():
             
         else:
             train(train_loader,model,epoch,criterion_cls,optimizer,opt)
+        
         scheduler.step()
         torch.cuda.empty_cache()
         
@@ -277,10 +280,10 @@ def train(train_loader,model,epoch,criterion_cls, optimizer,opt, criterion_metri
         
         x = x.cuda()
         with autocast():
-            out,out_c = model(x)
+            out,output = model(x)
         
         
-            loss = (1-opt.lamda)*criterion_cls(out_c,cls.cuda())#分类损失
+            loss = (1-opt.lamda)*criterion_cls(output ,cls.cuda())#分类损失
         
             cls_loss.update(loss.item())
             if criterion_metric != None:

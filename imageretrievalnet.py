@@ -16,7 +16,7 @@ from efficientnet_pytorch import EfficientNet
 
 import timm
 
-# from models import WSDAN
+# import models as WSDAN
 
 pool_dic = {
 "GeM":GeM,
@@ -103,7 +103,8 @@ def image_net(net_name,opt):
         net = torchvision.models.resnet101(pretrained=True)
     elif net_name == 'resnet50':
         net = torchvision.models.resnet50(pretrained=True)
-
+    elif 'ibn' in net_name:
+        net = model = torch.hub.load('XingangPan/IBN-Net', net_name, pretrained=True)
     # elif net_name == 'WSDAN':
     #     net = WSDAN(num_classes=opt.cls_num, M=config.num_attentions, net=config.net, pretrained=True)
         
