@@ -15,6 +15,7 @@ from normalization import *
 from efficientnet_pytorch import EfficientNet
 
 import timm
+from models.wsdan import WSDAN
 
 # import models as WSDAN
 
@@ -73,6 +74,19 @@ class ImageRetrievalresNet(nn.Module):
         cls = self.fc_cls(o.squeeze())
         o = self.norm(o).squeeze(-1).squeeze(-1)
         return o, cls
+
+class ImageRetrieval_WSDAN(nn.Module):
+    def __init__(self, net):
+        
+        super(ImageRetrieval_WSDAN, self).__init__()
+        self.net = net
+        self.norm = L2N()
+    
+    def forward(self, x, test=False):
+        cls, o, attention_map = self.net(x)
+        o = self.norm(o).squeeze(-1).squeeze(-1)
+        return o, cls
+
 class VITImageRetrievalNet(nn.Module):
     def __init__(self, net):
 
@@ -105,8 +119,9 @@ def image_net(net_name,opt):
         net = torchvision.models.resnet50(pretrained=True)
     elif 'ibn' in net_name:
         net = model = torch.hub.load('XingangPan/IBN-Net', net_name, pretrained=True)
-    # elif net_name == 'WSDAN':
-    #     net = WSDAN(num_classes=opt.cls_num, M=config.num_attentions, net=config.net, pretrained=True)
+    elif net_name == 'WSDAN':
+        net = WSDAN(num_classes=opt.cls_num, M=32, net='inception_mixed_6e', pretrained=True)
+        return ImageRetrieval_WSDAN(net)
         
     elif 'legacy' in net_name :
         net = timm.create_model(net_name, pretrained = True)

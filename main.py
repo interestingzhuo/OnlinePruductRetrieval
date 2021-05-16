@@ -120,7 +120,11 @@ def main():
 
         if isinstance(checkpoint,DataParallel):
             checkpoint = checkpoint.module.state_dict()
+        
         model.load_state_dict(checkpoint)
+        del checkpoint
+        torch.cuda.empty_cache()
+
     
  
 
@@ -229,7 +233,7 @@ def main():
         if opt.loss != 'cross':
             
 
-            if epoch % 3 == 0 and epoch != 0:#迭代式训练
+            if epoch % 5 == 0 and epoch != 0:#迭代式训练
                 train(train_loader_cls,model,epoch,criterion_cls,optimizer,opt)
             else:
                 train_loader.dataset.create_tuple()

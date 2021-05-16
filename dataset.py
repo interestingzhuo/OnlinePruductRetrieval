@@ -29,8 +29,9 @@ class ImagesForCls_list(data.Dataset):
         #############
         self.normal_transform = []
         if not self.is_validation:
-                self.normal_transform.extend([transforms.RandomResizedCrop(size=crop_im_size), self.transform, transforms.RandomGrayscale(p=0.2),
-                                              transforms.ColorJitter(0.2, 0.2, 0.2, 0.2), transforms.RandomHorizontalFlip(0.5)])
+                self.normal_transform.extend([transforms.RandomResizedCrop(size=crop_im_size), self.transform, transforms.RandomHorizontalFlip(0.5)])
+                # self.normal_transform.extend([transforms.RandomResizedCrop(size=crop_im_size), self.transform, transforms.RandomGrayscale(p=0.2),
+                #                               transforms.ColorJitter(0.2, 0.2, 0.2, 0.2), transforms.RandomHorizontalFlip(0.5)])
         else:
             self.normal_transform.extend([transforms.Resize(256), transforms.CenterCrop(crop_im_size)])
         self.normal_transform.extend([transforms.ToTensor(), normalize])
