@@ -74,9 +74,10 @@ python main_efficient.py --loss triplet --bs 512  --net efficientnet-b4 --cls-nu
 ### DML criteria
 
 * **smoothap** [[Smooth-AP: Smoothing the Path Towards Large-Scale Image Retrieval](https://arxiv.org/abs/2007.12163)] `--loss smoothap`
-* **Circle loss** [] `--loss circle`
+* **PNP loss** [[Rethinking the Optimization of Average Precision: Only Penalizing Negative Instances before Positive Ones Is Enough](https://github.com/interestingzhuo/PNPloss)] `--loss pnp`
 * **Contrastive** [] `--loss contrastive`
 * **Triplet** [] `--loss triplet`
+
 ...
 
 ### Architectures
