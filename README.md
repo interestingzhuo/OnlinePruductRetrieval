@@ -1,6 +1,6 @@
 ##
-# foodretreival
- Food Image Retrieval Baseline
+# eBayProduct Retrieval 
+eBayProduct Retrieval Baseline
 
 ---
 ## What can I find here?
@@ -8,7 +8,7 @@
 This repository contains all code and implementations used in:
 
 ```
-Food Retrieval
+eBay eProduct Visual Search Challenge - FGVC8 (CVPR2021)
 ```
 
 
@@ -19,17 +19,22 @@ Food Retrieval
 
 If you use this code in your research, please cite
 ```
-
+@article{Li_Min_Song_Zhu_Kang_Wei_Wei_Jiang_2022, 
+title={Rethinking the Optimization of Average Precision: Only Penalizing Negative Instances before Positive Ones Is Enough}, 
+volume={36}, 
+url={https://ojs.aaai.org/index.php/AAAI/article/view/20042}, 
+DOI={10.1609/aaai.v36i2.20042}, 
+number={2}, 
+journal={Proceedings of the AAAI Conference on Artificial Intelligence}, 
+author={Li, Zhuo and Min, Weiqing and Song, Jiajun and Zhu, Yaohui and Kang, Liping and Wei, Xiaoming and Wei, Xiaolin and Jiang, Shuqiang}, 
+year={2022}, 
+month={Jun.}, 
+pages={1518-1526} 
 }
 ```
 
 ---
 
-**[All implemented methods and metrics are listed at the bottom!](#-implemented-methods)**
-
----
-
----
 
 ## How to use this Repo
 
@@ -44,7 +49,7 @@ If you use this code in your research, please cite
 
 ### Datasets:
 Data for
-* mt-food20000 ()
+* eBay eProduct
 
 
 ### Training:
